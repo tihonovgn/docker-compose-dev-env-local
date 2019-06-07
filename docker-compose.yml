@@ -22,7 +22,7 @@ services:
         build: ./images/php
         # этот образ будет общаться с mysql
         links:
-            - mysql
+            - mysql:db
         # монтируем директорию с проектами
         volumes:
             - ./www:/var/www
