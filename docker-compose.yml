@@ -1,31 +1,41 @@
-# Версия docker-compose
 version: '2'
-# Список наших сервисов (контейнеров)
 services:
     nginx:
-        # используем последний стабильный образ nginx
         image: nginx:latest
         # маршрутизируем порты
         ports:
             - "80:80"
             - "443:443"
-        # монтируем директории, слева директории на основной машине, справа - куда они монтируются в контейнере
         volumes:
             - ./hosts:/etc/nginx/conf.d
             - ./www:/var/www
             - ./logs:/var/log/nginx
-        # nginx должен общаться с php контейнером
         links:
             - php
     php:
-        # у нас свой образ для PHP, указываем путь к нему и говорим что его надо собрать
         build: ./images/php
-        # этот образ будет общаться с mysql
         links:
             - mysql:db
-        # монтируем директорию с проектами
         volumes:
             - ./www:/var/www
+    shipment_doc_nginx:
+        container_name: shipment_doc_service
+        image: nginx:latest
+        ports:
+            - "8081:80"
+            - "8443:443"
+        volumes:
+            - ./shipment_docs/hosts:/etc/nginx/conf.d
+            - ./shipment_docs/www:/var/www
+            - ./shipment_docs/logs:/var/log/nginx
+        links:
+            - shipment_docs_php
+    shipment_docs_php:
+        build: ./shipment_docs/images/php
+        links:
+            - mysql:db
+        volumes:
+            - ./shipment_docs/www:/var/www
     mysql:
         image: mysql:8
         ports:
