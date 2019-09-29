@@ -1,58 +1,112 @@
 version: '2'
 services:
-    nginx:
-        image: nginx:latest
-        # маршрутизируем порты
+    autodiscovery:
+        build: ./autodiscovery/
+        mem_limit: 128m
+        expose:
+            - 53
+            - 8300
+            - 8301
+            - 8302
+            - 8400
+            - 8500
+        ports:
+            - 8500:8500
+        dns:
+            - 127.0.0.1
+    avs_nginx:
+        build: ./avs/nginx/
+        volumes_from:
+            - source_avs
+        links:
+            - autodiscovery
+            - avs_php
+        environment:
+            - BACKEND=avs-php
+            - CONSUL=autodiscovery
         ports:
             - "80:80"
             - "443:443"
-        volumes:
-            - ./hosts:/etc/nginx/conf.d
-            - ./www:/var/www
-            - ./logs:/var/log/nginx
+    avs_php:
+        build: ./avs/php/
+        volumes_from:
+            - source_avs
         links:
-            - php
-    php:
-        build: ./images/php
-        links:
-            - mysql:db
-        volumes:
-            - ./www:/var/www
-    shipment_doc_nginx:
-        container_name: shipment_doc_service
-        image: nginx:latest
-        ports:
-            - "8081:80"
-            - "8443:443"
-        volumes:
-            - ./shipment_docs/hosts:/etc/nginx/conf.d
-            - ./shipment_docs/www:/var/www
-            - ./shipment_docs/logs:/var/log/nginx
-        links:
-            - shipment_docs_php
-    shipment_docs_php:
-        build: ./shipment_docs/images/php
-        links:
-            - mysql:db
-        volumes:
-            - ./shipment_docs/www:/var/www
-    mysql:
-        image: mysql:8
+            - autodiscovery
+            - avs_mysql
+        expose:
+            - 9000
+        environment:
+            - BACKEND=avs-nginx
+            - CONSUL=autodiscovery
+    avs_mysql:
+        build: ./avs/mysql/
+        environment:
+            - CONSUL=autodiscovery
+            - MYSQL_ROOT_PASSWORD=secret
+            - MYSQL_DATABASE=avs
+            - MYSQL_USER=user
+            - MYSQL_PASSWORD=secret
         ports:
             - "3306:3306"
         volumes:
-            - ./mysql:/var/lib/mysql
-            - ./mysqlconf:/etc/mysql/conf.d
-        # задаем пароль для root пользователя
-        environment:
-            MYSQL_ROOT_PASSWORD: secret
-    phpmyadmin:
+            - ./avs/mysql/data:/var/lib/mysql
+            - ./avs/mysql/conf:/etc/mysql/conf.d
+    avs_phpmyadmin:
         image: phpmyadmin/phpmyadmin
         links:
-            - mysql:db
+            - avs_mysql:db
         ports:
             - 8000:80
         environment:
             MYSQL_ROOT_PASSWORD: secret
         depends_on:
-            - mysql
+            - avs_mysql
+    shipment_docs_nginx:
+        build: ./shipment_docs/nginx/
+        volumes_from:
+            - source_shipment_docs
+        links:
+            - autodiscovery
+            - shipment_docs_php
+        environment:
+            - BACKEND=shipment-docs-php
+            - CONSUL=autodiscovery
+        ports:
+            - "8081:80"
+            - "8443:443"
+    shipment_docs_php:
+        build: ./shipment_docs/php/
+        volumes_from:
+            - source_shipment_docs
+        links:
+            - autodiscovery
+            - shipment_docs_mysql
+        expose:
+            - 9000
+        environment:
+            - BACKEND=shipment-docs-nginx
+            - CONSUL=autodiscovery
+    shipment_docs_mysql:
+        build: ./shipment_docs/mysql/
+        environment:
+            - CONSUL=autodiscovery
+            - MYSQL_ROOT_PASSWORD=secret
+            - MYSQL_DATABASE=shipment_docs
+            - MYSQL_USER=user
+            - MYSQL_PASSWORD=secret
+        ports:
+            - 6666:3306
+        volumes:
+            - ./shipment_docs/mysql/data:/var/lib/mysql
+            - ./shipment_docs/mysql/conf:/etc/mysql/conf.d
+    source_shipment_docs:
+        image: nginx:stable
+        volumes:
+            - ../source/shipment_docs:/var/www
+        command: "true"
+    source_avs:
+        image: nginx:stable
+        volumes:
+            - ../source/avs:/var/www
+        command: "true"
