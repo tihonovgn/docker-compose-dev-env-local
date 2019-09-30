@@ -101,12 +101,22 @@ services:
             - ./shipment_docs/mysql/data:/var/lib/mysql
             - ./shipment_docs/mysql/conf:/etc/mysql/conf.d
     source_shipment_docs:
-        image: nginx:stable
+        image: dracoblue/lsyncd
+        environment:
+            - SOURCES=/mnt/vendor
+            - DESTINATIONS=/var/www/vendor
+            - EXCLUDES=.svn:.git:.docker
         volumes:
             - ../source/shipment_docs:/var/www
-        command: "true"
+            - ../source/shipment_docs/vendor:/mnt/vendor
+            - /var/www/vendor
     source_avs:
-        image: nginx:stable
+        image: dracoblue/lsyncd
+        environment:
+            - SOURCES=/mnt/vendor
+            - DESTINATIONS=/var/www/vendor
+            - EXCLUDES=.svn:.git:.docker
         volumes:
             - ../source/avs:/var/www
-        command: "true"
+            - ../source/avs/vendor:/mnt/vendor
+            - /var/www/vendor
