@@ -26,6 +26,8 @@ RUN curl --retry 7 --fail -Lks "https://releases.hashicorp.com/consul-template/$
     && unzip /tmp/consul-template.zip -d /usr/local/bin \
     && rm /tmp/consul-template.zip
 
+RUN echo 'date.timezone="Europe/Astrakhan"' >>  /usr/local/etc/php/conf.d/date.ini
+
 ENV CONTAINERPILOT_VERSION 2.4.3
 ENV CONTAINERPILOT_CHECKSUM 2c469a0e79a7ac801f1c032c2515dd0278134790
 ENV CONTAINERPILOT file:///etc/containerpilot.json

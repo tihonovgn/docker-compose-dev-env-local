@@ -35,6 +35,8 @@ RUN curl --retry 7 --fail -Lks "https://github.com/joyent/containerpilot/release
     && tar zxf /tmp/containerpilot.tar.gz -C /usr/local/bin \
     && rm /tmp/containerpilot.tar.gz
 
+RUN echo 'date.timezone="Europe/Astrakhan"' >>  /usr/local/etc/php/conf.d/date.ini
+
 COPY config/ /etc
 COPY scripts/ /usr/local/bin
 
