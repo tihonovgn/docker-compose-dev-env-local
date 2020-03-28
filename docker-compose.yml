@@ -16,8 +16,8 @@ services:
             - 127.0.0.1
     avs_nginx:
         build: ./avs/nginx/
-        volumes_from:
-            - source_avs
+        volumes:
+            - ../source/avs:/var/www
         links:
             - autodiscovery
             - avs_php
@@ -29,13 +29,15 @@ services:
             - "443:443"
     avs_php:
         build: ./avs/php/
-        volumes_from:
-            - source_avs
+        volumes:
+            - ../source/avs:/var/www
         links:
             - autodiscovery
             - avs_mysql
         expose:
             - 9000
+        ports:
+            - "9000:9000"
         environment:
             - BACKEND=avs-nginx
             - CONSUL=autodiscovery
@@ -52,6 +54,31 @@ services:
         volumes:
             - ./avs/mysql/data:/var/lib/mysql
             - ./avs/mysql/conf:/etc/mysql/conf.d
+    avs_sym_nginx:
+        build: ./avs_sym/nginx/
+        volumes:
+            - ../source/avs_sym:/var/www
+        links:
+            - autodiscovery
+            - avs_sym_php
+        environment:
+            - BACKEND=avs-sym-php
+            - CONSUL=autodiscovery
+        ports:
+            - "8082:80"
+            - "8543:443"
+    avs_sym_php:
+        build: ./avs_sym/php/
+        volumes:
+            - ../source/avs_sym:/var/www
+        links:
+            - autodiscovery
+            - avs_mysql
+        expose:
+            - 9000
+        environment:
+            - BACKEND=avs-sym-nginx
+            - CONSUL=autodiscovery
     avs_phpmyadmin:
         image: phpmyadmin/phpmyadmin
         links:
