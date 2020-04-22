@@ -18,6 +18,7 @@ services:
         build: ./avs/nginx/
         volumes:
             - ../source/avs:/var/www
+            - ./avs/nginx/log:/var/log/nginx
         links:
             - autodiscovery
             - avs_php
