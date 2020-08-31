@@ -1,4 +1,4 @@
-FROM php:7.3-fpm
+FROM php:7.4-fpm
 
 RUN apt-get update && apt-get install -y \
         curl \
@@ -12,10 +12,11 @@ RUN apt-get update && apt-get install -y \
         librabbitmq-dev \
         g++ libcurl4-gnutls-dev libpq-dev libxml2-dev unzip zlib1g-dev \
     && docker-php-ext-install -j$(nproc) iconv mysqli pdo_mysql zip intl bcmath \
-    && docker-php-ext-configure gd --with-freetype-dir=/usr/include/ --with-jpeg-dir=/usr/include/ \
+    && docker-php-ext-configure gd --with-freetype --with-jpeg \
     && docker-php-ext-install -j$(nproc) gd \
     && printf "\n" | pecl install amqp \
-    && printf "\n" | pecl install xdebug
+    && printf "\n" | pecl install xdebug-2.9.0 \
+    && printf "\n" |docker-php-ext-enable xdebug
 
 #consul
 ENV CONSUL_TEMPLATE_VERSION 0.16.0
